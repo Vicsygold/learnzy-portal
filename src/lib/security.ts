@@ -30,7 +30,10 @@ function getLimiter(scope: string, limit: number, windowMs: number) {
   const key = `${scope}:${limit}:${windowMs}`;
   const existing = limiters.get(key);
   if (existing) return existing;
-  const redis = Redis.fromEnv();
+  const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+  if (!url || !token) throw new Error("UPSTASH_REDIS_NOT_CONFIGURED");
+  const redis = new Redis({ url, token });
   const limiter = new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(limit, `${Math.ceil(windowMs / 1000)} s`),
@@ -42,7 +45,11 @@ function getLimiter(scope: string, limit: number, windowMs: number) {
 
 export async function rateLimit(request: Request, scope: string, limit: number, windowMs: number) {
   if (process.env.NODE_ENV !== "production") return localRateLimit(request, scope, limit, windowMs);
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const hasRedisConfiguration = (
+    (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+    || (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  );
+  if (!hasRedisConfiguration) {
     console.error("Production rate limiting is not configured.");
     return NextResponse.json({ error: "Rate limiting is not configured." }, { status: 503 });
   }

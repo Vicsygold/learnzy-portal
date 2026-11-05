@@ -212,5 +212,6 @@ rate limits login, password reset, admission, and upload-signature endpoints,
 handles malformed webhook JSON safely, and only accepts HTTPS Cloudinary URLs for
 stored assignment attachments. Production deployments use Upstash Redis for
 shared rate limiting; set `UPSTASH_REDIS_REST_URL` and
-`UPSTASH_REDIS_REST_TOKEN`. Local development uses an in-memory limiter when
-`NODE_ENV` is not `production`.
+`UPSTASH_REDIS_REST_TOKEN`. Vercel KV integrations are also supported through
+`KV_REST_API_URL` and `KV_REST_API_TOKEN`. Local development uses an in-memory
+limiter when `NODE_ENV` is not `production`.
